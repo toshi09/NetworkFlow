@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="graphGenerationCode/Mesh/|graphGenerationCode/FixedDegree/|graphGenerationCode/Random/|graphGenerationCode/Bipartite/" kind="src" path=""/>
+	<classpathentry kind="src" path="graphGenerationCode/Bipartite"/>
+	<classpathentry kind="src" path="graphGenerationCode/FixedDegree"/>
+	<classpathentry kind="src" path="graphGenerationCode/Mesh"/>
+	<classpathentry kind="src" path="graphGenerationCode/Random"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
