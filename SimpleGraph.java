@@ -188,6 +188,25 @@ public class SimpleGraph {
         System.out.println("opposite(c,y) is " + G.opposite(c,y));
 
     }
+    
+    public Edge get_edge(Vertex v, Vertex t) {
+    	for (Object e : this.edgeList) {
+    		Edge ed = (Edge)e;
+    		if(ed.getFirstEndpoint().equals(v) && ed.getSecondEndpoint().equals(t)) {
+    			return ed;
+    		}
+    	}
+    	return null;
+    }
+    
+    public String toString() {
+    	String s = "";
+    	for(Object e : this.edgeList) {
+    		Edge ed = (Edge)e;
+    		s += ed.toString() + "\n";
+    	}
+    	return s;
+    }
 }
 
 

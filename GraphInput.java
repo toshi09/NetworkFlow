@@ -52,7 +52,9 @@ public class GraphInput {
         int n, linenum = 0;
         Hashtable table = new Hashtable();
         SimpleGraph sg = newgraph;
-
+        Vertex source = null;
+        Vertex sink = null;
+        
         while (line != null) {
             linenum++;
             sTok = new StringTokenizer(line);
@@ -71,12 +73,17 @@ public class GraphInput {
                         v1 = sg.insertVertex(null, v1name);
                         table.put(v1name, v1);
                 }
+                
                 v2 = (Vertex) table.get(v2name);
                 if (v2 == null) {
 //                      System.out.println("New vertex " + v2name);
                     v2 = sg.insertVertex(null, v2name);
                     table.put(v2name, v2);
                 }
+                if(v1.getName().equals("s"))
+                	source = v1;
+                if(v2.getName().equals("t"))
+                	sink = v2;
 //              System.out.println("Inserting edge (" + v1name + "," + v2name + ")" + edgedata);
                 sg.insertEdge(v1,v2,edgedata, null);
             }
@@ -89,6 +96,9 @@ public class GraphInput {
 
         InputLib.fclose(inbuf);
         System.out.println("Successfully loaded "+ linenum + " lines. ");
+        //FordFulkerson f = new FordFulkerson(sg);
+        PreflowPush f = new PreflowPush(sg);
+        System.out.println(f.max_flow(source, sink));
         return table;
     }
 

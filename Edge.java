@@ -24,8 +24,9 @@ public class Edge {
     
     private Object data;  // an object associated with this edge
     private Object name;  // a name associated with this edge
-    private Double flow;
-    private Double capacity;
+    public Double flow;
+    public Double capacity;
+    public boolean artificial=false;
     /**
      * Constructor that allows data and a name to be associated
      * with the edge.
@@ -82,5 +83,7 @@ public class Edge {
     public Object getName() {
         return this.name;
     }
-    
+    public String toString(){
+    	return this.getFirstEndpoint().getName() + ":" + this.getSecondEndpoint().getName();
+    }
 }

@@ -24,7 +24,8 @@ public class Vertex {
 
     private Object data;              // an object associated with this vertex
     private Object name;              // a name associated with this vertex
-    
+    public int height = 0;
+    public double excess = 0.0;
     /**
      * Constructor that allows data and a name to be associated
      * with the vertex.
@@ -59,5 +60,14 @@ public class Vertex {
      */
     public void setData(Object data) {
         this.data = data;
+    }
+    
+    public boolean equals(Object o) {
+    	Vertex v = (Vertex)o;
+    	return this.getName().equals(v.getName());
+    }
+   
+    public String  toString(){
+    	return (String)this.getName();
     }
 }
