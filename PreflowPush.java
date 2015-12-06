@@ -19,51 +19,6 @@ public class PreflowPush {
     	}
     	return copy;
     }
-
-    public SimpleGraph create_residual_graph(SimpleGraph orig) {
-    	SimpleGraph resid = new SimpleGraph();
-    	for(Object e : orig.edgeList) {
-    		Edge ed = (Edge)e;
-    		double remaining = ed.capacity - ed.flow;
-    		Vertex f = this.find_vertex(resid, (String)ed.getFirstEndpoint().getName());
-    		if (f == null)
-    			f = resid.insertVertex(ed.getFirstEndpoint().getData(), 
-    				ed.getFirstEndpoint().getName());
-       			
-    		Vertex s = this.find_vertex(resid, (String)ed.getSecondEndpoint().getName());
-    		if (s == null)
-             	s = resid.insertVertex(ed.getSecondEndpoint().getData(), 
-       				ed.getSecondEndpoint().getName());
-                       		     
-    		Edge orig_ed = resid.insertEdge(f, s, remaining, null);
-    		orig_ed.artificial = false;
-    		Edge resid_new_edge = resid.insertEdge(s, f, ed.capacity, null);
-    		resid_new_edge.artificial = true;
-    		//System.out.println(orig_ed+ " "+ orig_ed.artificial);
-    		//System.out.println(resid_new_edge + " "+ resid_new_edge.artificial);
-
-    	}
-    	System.out.println("Num edges in residual graph "+resid.numEdges());
-    	return resid;
-    }
-
-    public SimpleGraph update_residual(SimpleGraph resid){
-    	for(Object o : resid.edgeList) {
-    		Edge ed = (Edge)o;
-    		double cap = ed.capacity;
-    		if(!ed.artificial) {
-    			double new_capacity = ed.capacity - ed.flow;
-    		    if(new_capacity < 0)
-    		    	continue;
-    		    ed.capacity = new_capacity;
-    			//System.out.println("Setting the cap "+ ed.capacity);
-    		}
-    		else{
-    			ed.capacity = cap;
-    		}
-    	}
-    	return resid;
-    }
     void init_height(SimpleGraph g, Vertex source, Vertex sink) {
     	int num_nodes = g.vertexList.size();
     	for (Object v : g.vertexList) {
@@ -85,19 +40,6 @@ public class PreflowPush {
     		}
     	}
     	return null;
-    }
-
-    public List<Edge> find_all_edges(SimpleGraph g, Vertex v, Vertex t) {
-    	List<Edge> edges = new ArrayList<Edge>();
-    	for(Object e : g.edgeList) {
-    		Edge ed = (Edge)e;
-    		Vertex fst = ed.getFirstEndpoint();
-    		Vertex sec = ed.getSecondEndpoint();
-    		if(fst == v && sec == t) {
-    			edges.add(ed);
-    		}
-    	}
-    	return edges;
     }
 
     public boolean push(SimpleGraph g, Vertex v, Vertex w) {
@@ -139,13 +81,6 @@ public class PreflowPush {
     	    	       ht = false;
     	            }
     		    }
-    		}
-    		if(ed == null) {
-    			ed = this.find_edge(g, w, v);
-    			//if(ed.flow <= ed.capacity) {
-    				//if(w.height < v.height)
-    				//	ht = false;
-    			//}
     		}
     	}
     	return ht;
