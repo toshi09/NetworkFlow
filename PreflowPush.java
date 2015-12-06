@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 public class PreflowPush {
@@ -101,45 +103,55 @@ public class PreflowPush {
     public boolean push(SimpleGraph g, Vertex v, Vertex w) {
         double excess_at_v = this.excess(g, v);
     	if(excess_at_v > 0 && w.height < v.height) {
-            List<Edge> edges = this.find_all_edges(g, v, w);
-            for(Edge ed : edges) {
-                //System.out.println(ed.artificial);
-              if(!ed.artificial) {
-            	  double resid = ed.capacity - ed.flow;
-            	  double min = Math.min(excess_at_v, resid);
-            	  if(min <= 0)
-            		  continue;
-            	  ed.flow += min;
-            	  System.out.println("Increased the flow "+ ed.flow + " "+min);
-                  return true;
-              }
-              else { // Backward edge
-            	double min = Math.min(excess_at_v, ed.flow);
-            	if (min <= 0)
-            		continue;
-                ed.flow = ed.flow - min;
-                System.out.println("Decreased the flow "+ ed.flow);
-                return true;
-              }
-              
-            }
+    		Edge forward = this.find_edge(g, v, w);
+    		if(forward != null) {
+    			double resid = forward.capacity - forward.flow;
+    			double min = Math.min(excess_at_v, resid);
+    			if(min <= 0)
+    				return false;
+    			
+    			forward.flow += min;
+    			//System.out.println("Pushed the flow "+ min + " on edge "+ forward + " total "+forward.flow);
+                return true;   
+    		}
+    		else {
+    			Edge back = this.find_edge(g, w, v);
+    			double min = Math.min(excess_at_v, back.flow);
+    			if(min <= 0)
+    				return false;
+    			back.flow = back.flow - min;
+    			//System.out.println("Reduce the flow "+ min + " on edge "+ back + " total "+ back.flow);       
+    		    return true;
+    		}              
     	}
         return false;
     }
     
-    public boolean check_all_neigh_height(Vertex v){
-    	for(Object o : v.incidentEdgeList) {
-    		Edge ed = (Edge)o;
-    		if(ed.getFirstEndpoint().getName().equals(v.getName())) {
-    			Vertex w = ed.getSecondEndpoint();
-    			if (w.height >= v.height)
-    				return true;
+    
+    public boolean check_all_neigh_height(SimpleGraph g, Vertex v){
+    	Set<Vertex> n_list = this.get_all_neighbors(v);
+        boolean ht = true;
+    	for(Vertex w : n_list) {
+    		Edge ed = this.find_edge(g, v, w);
+    		if(ed != null) {
+    		    if (ed.capacity - ed.flow > 0) {
+    	            if(w.height < v.height) {
+    	    	       ht = false;
+    	            }
+    		    }
+    		}
+    		if(ed == null) {
+    			ed = this.find_edge(g, w, v);
+    			//if(ed.flow <= ed.capacity) {
+    				//if(w.height < v.height)
+    				//	ht = false;
+    			//}
     		}
     	}
-    	return false;
+    	return ht;
     }
     public double relabel(SimpleGraph g, Vertex v){
-        if(this.excess(g, v) > 0 && this.check_all_neigh_height(v)) {
+        if(this.excess(g, v) > 0 && this.check_all_neigh_height(g, v)) {
         	v.height = v.height + 1;
         }
     	return v.height;
@@ -149,13 +161,10 @@ public class PreflowPush {
     	source = this.find_vertex(resid, (String)source.getName());
     	for(Object e : source.incidentEdgeList) {
     		Edge ed = (Edge)e;
-    		if(ed.artificial)
-    			continue; // Do not conside edges which were introduces due to Residual Graph creation
     		if(ed.getFirstEndpoint().equals(source)) {
     			ed.flow = ed.capacity;
     		}
-    	}
-    		
+    	}		
     }
     
     public double excess(SimpleGraph g, Vertex v) {
@@ -163,12 +172,6 @@ public class PreflowPush {
     	double out = 0.0;
     	for(Object e : v.incidentEdgeList) {
     		Edge ed = (Edge)e;
-    		//if(ed.capacity <= 0) {
-    		    //System.out.println("EXcess Not : " +ed);
-    		//	continue;
-    		//}
-    		//if(ed.artificial)
-    		//	continue; // Do not consider which were created due to Residual Graph
     		if(ed.getFirstEndpoint().equals(v)) {
     			out += ed.flow;
     		}
@@ -189,8 +192,28 @@ public class PreflowPush {
         return result;
      }
 
-    Vertex find_vertex_with_excess(SimpleGraph g) {
+     Set<Vertex> get_all_neighbors(Vertex v) {
+     	Set<Vertex> result = new HashSet<Vertex>();
+     	for(Object e : v.incidentEdgeList){
+     		Edge ed = (Edge)e;
+            Vertex f = ed.getSecondEndpoint();
+            if (!f.equals(v)) {
+            	result.add(f);
+            }
+            Vertex s = ed.getFirstEndpoint();
+            if (!s.equals(v)) {
+            	result.add(s);
+            }
+            
+     	}
+         return result;
+      }
+
+    Vertex find_vertex_with_excess(SimpleGraph g, Vertex source, Vertex sink) {
     	for(Object o : g.vertexList) {
+    		Vertex v = (Vertex)o;
+    		if (v.equals(source) || v.equals(sink))
+    			continue;
     		if (this.excess(g, (Vertex)o) > 0) {
     			return (Vertex)o;
     		}
@@ -200,28 +223,37 @@ public class PreflowPush {
     
     double max_flow(Vertex source, Vertex sink) {
         double max_flow = 0.0;
-        this.init_height(resid, source, sink);
-        this.init_flow(resid, source);
-        this.update_residual(resid);
+        this.init_height(this.sg, source, sink);
+        this.init_flow(this.sg, source);
+        
         Vertex v_excess = null;
-        while((v_excess=this.find_vertex_with_excess(resid)) != null) {
-            System.out.println("Excess node "+v_excess );
-        	List<Vertex> all_n = this.get_neighbors(v_excess);
-            boolean pushed = false;
+        int i = 0;
+        while((v_excess=this.find_vertex_with_excess(this.sg, source, sink)) != null) {
+            //System.out.println("Excess node "+v_excess );
+        	Set<Vertex> all_n = this.get_all_neighbors(v_excess);
+            
+        	boolean pushed = false;
             for(Vertex n : all_n) {
-            	if(this.push(resid, v_excess, n)) {
-            		System.out.println("Pushed to "+v_excess + " "+n);
+            	if(this.push(this.sg, v_excess, n)) {
+            		//System.out.println("Pushed to "+v_excess + " "+n);
             		pushed = true;
-            		this.update_residual(resid);
             		break;
             	}
             }
+           
             if(!pushed) {
-            	this.relabel(resid, v_excess);
-            	System.out.println("Relabeling " + v_excess + " to "+ v_excess.height + " "+this.excess(resid, v_excess));
+            	this.relabel(this.sg, v_excess);
+            	//System.out.println("Relabeling " + v_excess + " to "+ v_excess.height + " "+this.excess(this.sg, v_excess));
             }
+           
         }
         
+        for(Object o : source.incidentEdgeList){
+        	Edge ed = (Edge)o;
+        	if(ed.getFirstEndpoint().equals(source)) {
+        		max_flow += ed.flow;
+        	}
+        }
         return max_flow;
         
     }
